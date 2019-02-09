@@ -1,20 +1,24 @@
-package component
+package runner
 
 import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/awslabs/goformation/cloudformation"
 )
 
+// DynamoDB provides dynamodb operation from cloudformation settings
 type DynamoDB struct {
-	ddb *dynamodb.DynamoDB
+	ddb dynamodbiface.DynamoDBAPI
 	tbl cloudformation.AWSDynamoDBTable
 }
 
-func NewDynamoDB(ddb *dynamodb.DynamoDB, tbl cloudformation.AWSDynamoDBTable) *DynamoDB {
+// NewDynamoDB returns DynamoDB operation object
+func NewDynamoDB(ddb dynamodbiface.DynamoDBAPI, tbl cloudformation.AWSDynamoDBTable) *DynamoDB {
 	return &DynamoDB{ddb, tbl}
 }
 
+// CreateIfNotExists provides create table operation
 func (t *DynamoDB) CreateIfNotExists() bool {
 	tblName := t.tbl.TableName
 	schema := []*dynamodb.KeySchemaElement{}
@@ -43,6 +47,7 @@ func (t *DynamoDB) CreateIfNotExists() bool {
 	return created
 }
 
+// Truncate provides cleanup table
 func (t *DynamoDB) Truncate() {
 	input := (&dynamodb.ScanInput{}).SetTableName(t.tbl.TableName)
 	t.ddb.ScanPages(input, func(output *dynamodb.ScanOutput, ok bool) bool {
@@ -50,7 +55,9 @@ func (t *DynamoDB) Truncate() {
 			keys := map[string]*dynamodb.AttributeValue{}
 			for _, s := range t.tbl.KeySchema {
 				name := s.AttributeName
-				keys[name] = item[name]
+				if val, ok := item[name]; ok {
+					keys[name] = val
+				}
 			}
 			t.ddb.DeleteItem((&dynamodb.DeleteItemInput{}).
 				SetTableName(t.tbl.TableName).
