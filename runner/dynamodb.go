@@ -27,10 +27,23 @@ func (t *DynamoDB) CreateIfNotExists() bool {
 			SetAttributeName(s.AttributeName).
 			SetKeyType(s.KeyType))
 	}
-	var created bool
-	_, err := t.ddb.CreateTable((&dynamodb.CreateTableInput{}).
+	attrs := []*dynamodb.AttributeDefinition{}
+	for _, d := range t.tbl.AttributeDefinitions {
+		attrs = append(attrs, (&dynamodb.AttributeDefinition{}).
+			SetAttributeName(d.AttributeName).
+			SetAttributeType(d.AttributeType))
+	}
+	input := (&dynamodb.CreateTableInput{}).
 		SetTableName(tblName).
-		SetKeySchema(schema))
+		SetAttributeDefinitions(attrs).
+		SetKeySchema(schema)
+	if tp := t.tbl.ProvisionedThroughput; tp != nil {
+		input = input.SetProvisionedThroughput((&dynamodb.ProvisionedThroughput{}).
+			SetReadCapacityUnits(tp.ReadCapacityUnits).
+			SetWriteCapacityUnits(tp.WriteCapacityUnits))
+	}
+	var created bool
+	_, err := t.ddb.CreateTable(input)
 	if err != nil {
 		e, ok := err.(awserr.Error)
 		if !ok || e.Code() != dynamodb.ErrCodeTableAlreadyExistsException {
@@ -38,12 +51,14 @@ func (t *DynamoDB) CreateIfNotExists() bool {
 		}
 		created = true
 	}
-	ttl := t.tbl.TimeToLiveSpecification
-	t.ddb.UpdateTimeToLive((&dynamodb.UpdateTimeToLiveInput{}).
-		SetTableName(tblName).
-		SetTimeToLiveSpecification((&dynamodb.TimeToLiveSpecification{}).
+	if ttl := t.tbl.TimeToLiveSpecification; ttl != nil {
+		spec := (&dynamodb.TimeToLiveSpecification{}).
 			SetAttributeName(ttl.AttributeName).
-			SetEnabled(ttl.Enabled)))
+			SetEnabled(ttl.Enabled)
+		t.ddb.UpdateTimeToLive((&dynamodb.UpdateTimeToLiveInput{}).
+			SetTableName(tblName).
+			SetTimeToLiveSpecification(spec))
+	}
 	return created
 }
 
