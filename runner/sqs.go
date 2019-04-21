@@ -3,7 +3,6 @@ package runner
 import (
 	"fmt"
 
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/awslabs/goformation/cloudformation/resources"
@@ -25,8 +24,7 @@ func NewSQS(endpoint string, svc sqsiface.SQSAPI, que *resources.AWSSQSQueue) *S
 func (q *SQS) CreateIfNotExists() bool {
 	_, err := q.svc.CreateQueue((&sqs.CreateQueueInput{}).SetQueueName(q.que.QueueName))
 	if err != nil {
-		e, ok := err.(awserr.Error)
-		if !ok || e.Code() != sqs.ErrCodeQueueNameExists {
+		if !compareAWSErrorCode(err, sqs.ErrCodeQueueNameExists) {
 			panic(err)
 		}
 		return false

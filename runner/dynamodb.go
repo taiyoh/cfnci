@@ -1,7 +1,6 @@
 package runner
 
 import (
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
 	"github.com/awslabs/goformation/cloudformation/resources"
@@ -45,8 +44,7 @@ func (t *DynamoDB) CreateIfNotExists() bool {
 	var created bool
 	_, err := t.ddb.CreateTable(input)
 	if err != nil {
-		e, ok := err.(awserr.Error)
-		if !ok || e.Code() != dynamodb.ErrCodeResourceInUseException {
+		if !compareAWSErrorCode(err, dynamodb.ErrCodeResourceInUseException) {
 			panic(err)
 		}
 		created = true
