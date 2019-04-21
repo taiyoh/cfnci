@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
+	"github.com/aws/aws-sdk-go/service/s3/s3iface"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
 	"github.com/awslabs/goformation"
 	"github.com/awslabs/goformation/cloudformation"
@@ -46,4 +47,13 @@ func (p *Provider) SQS(svc sqsiface.SQSAPI, endpoint, name string) (*runner.SQS,
 		return nil, err
 	}
 	return runner.NewSQS(endpoint, svc, q), nil
+}
+
+// S3 returns runner.S3 object.
+func (p *Provider) S3(svc s3iface.S3API, name string) (*runner.S3, error) {
+	s, err := p.cfTemplate.GetAWSS3BucketWithName(name)
+	if err != nil {
+		return nil, err
+	}
+	return runner.NewS3(svc, s), nil
 }
