@@ -18,12 +18,13 @@ func NewS3(svc s3iface.S3API, resource *resources.AWSS3Bucket) *S3 {
 }
 
 // CreateIfNotExists provides create bucket operation.
-func (s *S3) CreateIfNotExists() error {
+func (s *S3) CreateIfNotExists() bool {
 	_, err := s.svc.CreateBucket((&s3.CreateBucketInput{}).SetBucket(s.resource.BucketName))
 	if err != nil {
 		if !compareAWSErrorCode(err, s3.ErrCodeBucketAlreadyExists) {
-			return err
+			panic(err)
 		}
+		return false
 	}
-	return nil
+	return true
 }
