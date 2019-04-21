@@ -6,18 +6,18 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/sqs/sqsiface"
-	"github.com/awslabs/goformation/cloudformation"
+	"github.com/awslabs/goformation/cloudformation/resources"
 )
 
 // SQS provides sqs operation from cloudformation settings
 type SQS struct {
 	endpoint string
 	svc      sqsiface.SQSAPI
-	que      cloudformation.AWSSQSQueue
+	que      *resources.AWSSQSQueue
 }
 
 // NewSQS returns SQS operation object
-func NewSQS(endpoint string, svc sqsiface.SQSAPI, que cloudformation.AWSSQSQueue) *SQS {
+func NewSQS(endpoint string, svc sqsiface.SQSAPI, que *resources.AWSSQSQueue) *SQS {
 	return &SQS{endpoint, svc, que}
 }
 
