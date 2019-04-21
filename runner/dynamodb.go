@@ -4,17 +4,17 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbiface"
-	"github.com/awslabs/goformation/cloudformation"
+	"github.com/awslabs/goformation/cloudformation/resources"
 )
 
 // DynamoDB provides dynamodb operation from cloudformation settings
 type DynamoDB struct {
 	ddb dynamodbiface.DynamoDBAPI
-	tbl cloudformation.AWSDynamoDBTable
+	tbl *resources.AWSDynamoDBTable
 }
 
 // NewDynamoDB returns DynamoDB operation object
-func NewDynamoDB(ddb dynamodbiface.DynamoDBAPI, tbl cloudformation.AWSDynamoDBTable) *DynamoDB {
+func NewDynamoDB(ddb dynamodbiface.DynamoDBAPI, tbl *resources.AWSDynamoDBTable) *DynamoDB {
 	return &DynamoDB{ddb, tbl}
 }
 
@@ -46,7 +46,7 @@ func (t *DynamoDB) CreateIfNotExists() bool {
 	_, err := t.ddb.CreateTable(input)
 	if err != nil {
 		e, ok := err.(awserr.Error)
-		if !ok || e.Code() != dynamodb.ErrCodeTableAlreadyExistsException {
+		if !ok || e.Code() != dynamodb.ErrCodeResourceInUseException {
 			panic(err)
 		}
 		created = true
