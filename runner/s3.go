@@ -21,7 +21,7 @@ func NewS3(svc s3iface.S3API, resource *resources.AWSS3Bucket) *S3 {
 func (s *S3) CreateIfNotExists() bool {
 	_, err := s.svc.CreateBucket((&s3.CreateBucketInput{}).SetBucket(s.resource.BucketName))
 	if err != nil {
-		if !compareAWSErrorCode(err, s3.ErrCodeBucketAlreadyExists) {
+		if !compareAWSErrorCode(err, s3.ErrCodeBucketAlreadyOwnedByYou) {
 			panic(err)
 		}
 		return false
